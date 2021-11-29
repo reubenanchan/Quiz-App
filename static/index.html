@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Welcome to 3316 Quiz!</h1>
+    <button id='begin'>Begin Quiz</button>
+    <div id="questionDiv"></div>
+    <script>
+        
+        //btton to begin quiz
+        let beginbutton = document.getElementById('begin');
+        beginbutton.onclick = loadQuestions;
+        
+        // method to load questions
+        function loadQuestions()
+        {
+            beginbutton.remove(); //remove button when user begins quiz
+
+            //change to show questions
+            let ourRequest = new XMLHttpRequest();
+            ourRequest.onreadystatechange = displayQuestions;
+            
+            ourRequest.open('GET', '/questions',true);
+            ourRequest.send();
+        }
+        
+        // method to check if answers seleted are correct
+        function checkAnswer(questionIndex,answerIndex)
+        {
+            let ourRequest = new XMLHttpRequest();
+            ourRequest.onreadystatechange = displayAnswer;
+            
+            ourRequest.open('GET', `/answers?q=${questionIndex}&a=${answerIndex}`,true);
+            ourRequest.send();
+        }
+
+        // load grade
+        function loadGrade()
+        {
+            let submitBtn = document.getElementById('submit-btn');
+            submitBtn.remove();// remove button when grade is displayed
+
+            let ourRequest = new XMLHttpRequest();
+            ourRequest.onreadystatechange = displayGrade;
+
+            ourRequest.open('GET', `/`, true);
+            ourRequest.send();
+        }
+
+        // display questions
+        function displayQuestions()
+        {
+            if(this.readyState == 4 && this.status == 200)//make sure request in finished and response is ready
+            {
+                let questions = document.getElementById('questionDiv');
+                let questionList = JSON.parse(this.responseText);//turn into string
+                let content = "";
+                let questionsIndex = 0;
+
+                content += '<form action=javascript:loadGrade()>';
+
+                for(q of questionList)
+                {
+                    content += '<p>' + q.stem + '</p>';// import questions
+
+                    let answersIndex = 0;
+                    
+                    for(i of q.options)
+                    {
+                        content += '<input type="radio" id="answer ' + i + '" name="' + q.stem + '" onclick=checkAnswer(' + questionsIndex + ',' + answersIndex + ')>';
+                        content += '<label for="answer ' + i + '">' + i + '</label></br>';
+                        answersIndex++;
+                    }
+                    
+                    content += '</br><div id=\'answerDiv' + questionsIndex + '\' name=answers></div>';
+                    questionsIndex++;
+                }
+
+                content += `</br><input type="submit" value="Submit" id="submit-btn">
+                            </form></br>
+                            <div id=\'gradeDiv\'></div></br>`;
+                questions.innerHTML = content;
+            }
+        }
+
+        // display answers
+        function displayAnswer()
+        {
+            if(this.readyState == 4 && this.status == 200)//make sure request in finished and response is ready
+            {
+                const myAnswer = this.responseText.split(" ")
+
+                let answerDiv = document.getElementById('answerDiv' + myAnswer[1]);//give answer
+                answerDiv.innerHTML = myAnswer[0];
+            }
+        }
+
+        // display total grade
+        function displayGrade()
+        {
+            if(this.readyState == 4 && this.status == 200)//make sure request in finished and response is ready
+            {
+                let gradeDiv = document.getElementById('gradeDiv');
+                let correct = 0;
+
+                let answerButtons = document.getElementsByName("answers");
+                for(let i = 0; i < answerButtons.length; i++){
+                    if(answerButtons[i].innerHTML == "Correct")
+                        correct++;
+                }
+
+                gradeDiv.innerHTML = "Grade: " + correct / 5 * 100 + "%";
+            }
+        }
+        
+
+    </script>
+</body>
+</html>
